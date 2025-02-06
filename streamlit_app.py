@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # Define the API endpoint
-FASTAPI_URL = "http://127.0.0.1:8000/predict"  # Replace with your FastAPI server URL
+FASTAPI_URL = "https://machine-learning-project-bu4q.onrender.com/predict"  # Replace with your FastAPI server URL
 
 # Title of the app
 st.title("Rain Prediction App 🌧️")
