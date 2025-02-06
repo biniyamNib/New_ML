@@ -2,52 +2,40 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# FastAPI endpoint
-FASTAPI_URL = "http://127.0.0.1:8000/predict"
+# Define the API endpoint
+FASTAPI_URL = "http://127.0.0.1:8000/predict"  # Replace with your FastAPI server URL
 
 # Title of the app
-st.title("🌧️ Rain Prediction App")
+st.title("Rain Prediction App 🌧️")
 
-# Description
-st.write("""
-This app predicts whether it will rain tomorrow based on weather data. 
-Enter the required information below and click **Predict** to see the result.
-""")
+# Sidebar for user input
+st.sidebar.header("User Input Parameters")
 
-# Input fields for the user
-st.header("Input Features")
+# Function to get user input
+def get_user_input():
+    MinTemp = st.sidebar.slider("Minimum Temperature (°C)", -10.0, 50.0, 15.0)
+    MaxTemp = st.sidebar.slider("Maximum Temperature (°C)", -10.0, 50.0, 25.0)
+    Rainfall = st.sidebar.slider("Rainfall (mm)", 0.0, 100.0, 0.0)
+    Evaporation = st.sidebar.slider("Evaporation (mm)", 0.0, 20.0, 5.0)
+    Sunshine = st.sidebar.slider("Sunshine (hours)", 0.0, 15.0, 7.0)
+    WindGustDir = st.sidebar.selectbox("Wind Gust Direction", ["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
+    WindGustSpeed = st.sidebar.slider("Wind Gust Speed (km/h)", 0.0, 150.0, 40.0)
+    WindDir9am = st.sidebar.selectbox("Wind Direction at 9am", ["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
+    WindDir3pm = st.sidebar.selectbox("Wind Direction at 3pm", ["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
+    WindSpeed9am = st.sidebar.slider("Wind Speed at 9am (km/h)", 0.0, 100.0, 10.0)
+    WindSpeed3pm = st.sidebar.slider("Wind Speed at 3pm (km/h)", 0.0, 100.0, 15.0)
+    Humidity9am = st.sidebar.slider("Humidity at 9am (%)", 0.0, 100.0, 60.0)
+    Humidity3pm = st.sidebar.slider("Humidity at 3pm (%)", 0.0, 100.0, 50.0)
+    Pressure9am = st.sidebar.slider("Pressure at 9am (hPa)", 900.0, 1100.0, 1015.0)
+    Pressure3pm = st.sidebar.slider("Pressure at 3pm (hPa)", 900.0, 1100.0, 1013.0)
+    Cloud9am = st.sidebar.slider("Cloud at 9am (oktas)", 0.0, 9.0, 5.0)
+    Cloud3pm = st.sidebar.slider("Cloud at 3pm (oktas)", 0.0, 9.0, 4.0)
+    Temp9am = st.sidebar.slider("Temperature at 9am (°C)", -10.0, 50.0, 20.0)
+    Temp3pm = st.sidebar.slider("Temperature at 3pm (°C)", -10.0, 50.0, 25.0)
+    RainToday = st.sidebar.selectbox("Rain Today", ["No", "Yes"])
 
-# Create two columns for better layout
-col1, col2 = st.columns(2)
-
-with col1:
-    MinTemp = st.number_input("Minimum Temperature (°C)", value=10.0)
-    MaxTemp = st.number_input("Maximum Temperature (°C)", value=20.0)
-    Rainfall = st.number_input("Rainfall (mm)", value=0.0)
-    Evaporation = st.number_input("Evaporation (mm)", value=5.0)
-    Sunshine = st.number_input("Sunshine (hours)", value=7.0)
-    WindGustDir = st.selectbox("Wind Gust Direction", ["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
-    WindGustSpeed = st.number_input("Wind Gust Speed (km/h)", value=40.0)
-    WindDir9am = st.selectbox("Wind Direction at 9am", ["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
-    WindDir3pm = st.selectbox("Wind Direction at 3pm", ["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
-
-with col2:
-    WindSpeed9am = st.number_input("Wind Speed at 9am (km/h)", value=10.0)
-    WindSpeed3pm = st.number_input("Wind Speed at 3pm (km/h)", value=20.0)
-    Humidity9am = st.number_input("Humidity at 9am (%)", value=70.0)
-    Humidity3pm = st.number_input("Humidity at 3pm (%)", value=50.0)
-    Pressure9am = st.number_input("Pressure at 9am (hPa)", value=1015.0)
-    Pressure3pm = st.number_input("Pressure at 3pm (hPa)", value=1010.0)
-    Cloud9am = st.number_input("Cloud at 9am (oktas)", value=5.0)
-    Cloud3pm = st.number_input("Cloud at 3pm (oktas)", value=4.0)
-    Temp9am = st.number_input("Temperature at 9am (°C)", value=15.0)
-    Temp3pm = st.number_input("Temperature at 3pm (°C)", value=18.0)
-    RainToday = st.selectbox("Rain Today", ["No", "Yes"])
-
-# Predict button
-if st.button("Predict"):
-    # Prepare the input data
-    input_data = {
+    # Create a dictionary to store the user input
+    user_data = {
         "MinTemp": MinTemp,
         "MaxTemp": MaxTemp,
         "Rainfall": Rainfall,
@@ -70,12 +58,37 @@ if st.button("Predict"):
         "RainToday": RainToday,
     }
 
-    # Send the input data to the FastAPI endpoint
-    response = requests.post(FASTAPI_URL, json=input_data)
+    # Convert the dictionary to a DataFrame
+    features = pd.DataFrame(user_data, index=[0])
+    return features
 
-    if response.status_code == 200:
-        result = response.json()
-        st.success(f"Prediction: {result['prediction']}")
-        st.info(f"Probability: {result['probability']:.2f}")
-    else:
-        st.error("An error occurred while making the prediction. Please check your input.")
+# Get user input
+user_input = get_user_input()
+
+# Display the user input
+st.subheader("User Input Parameters")
+st.write(user_input)
+
+# Debug: Print the user input being sent
+st.write("User Input to be Sent:", user_input.to_dict(orient="records")[0])
+
+# Make a prediction
+if st.button("Predict"):
+    try:
+        # Convert the DataFrame to a dictionary and send it as JSON
+        input_data = user_input.to_dict(orient="records")[0]
+        st.write("Data being sent to API:", input_data)
+
+        # Send the user input to the FastAPI server
+        response = requests.post(FASTAPI_URL, json=input_data)
+        st.write("API Response Status Code:", response.status_code)
+        st.write("API Response Content:", response.json())
+        response.raise_for_status()
+
+        # Get the prediction result
+        prediction = response.json()
+        st.subheader("Prediction Result")
+        st.write(f"Will it rain tomorrow? **{prediction['prediction']}**")
+        st.write(f"Probability of rain: **{prediction['probability']:.2f}**")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error making prediction: {e}")
